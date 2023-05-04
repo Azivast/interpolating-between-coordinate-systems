@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using Vectors;
 
 public static class MatrixHelper
 {
@@ -17,7 +18,7 @@ public static class MatrixHelper
         matrix.m23 = translation.z;
     }
     
-    public static Quaternion ExtractRotation(Matrix4x4 matrix)
+    public static Quaternion ExtractRotation(Matrix4x4 matrix, VectorRenderer vectors)
     {
         float dotx = Vector3.Dot(((Vector3)matrix.GetColumn(0)).normalized, Vector3.right);
         float doty = Vector3.Dot(((Vector3)matrix.GetColumn(1)).normalized, Vector3.up);
@@ -43,8 +44,12 @@ public static class MatrixHelper
             normal = matrix.GetColumn(2).normalized;
             rotationAxis = Vector3.Cross(normal, Vector3.forward);
         }
-
         rotationAxis = (rotationAxis/Mathf.Sin(rads))*Mathf.Sin(rads/2);
+        rotationAxis.Normalize();
+        
+        // DEBUG TODO 
+        vectors.Draw(matrix.GetColumn(3), (Vector3)rotationAxis + (Vector3)matrix.GetColumn(3), Color.yellow);
+        
 
         // Create quaternion of rotation
         return new Quaternion(rotationAxis.x, rotationAxis.y, rotationAxis.z, Mathf.Cos(rads/2));

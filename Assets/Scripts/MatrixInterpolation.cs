@@ -18,7 +18,7 @@ public class MatrixInterpolation : MonoBehaviour
     [SerializeField] private bool DoRotation = true;
     [SerializeField] private bool DoScale = true;
     
-    private VectorRenderer vectors;
+    public VectorRenderer vectors; // TODO: debug, make private
     [Range(0, 1)] public float Time = 0;
 
     [SerializeField, HideInInspector] internal Matrix4x4 A = Matrix4x4.identity; // Original state
@@ -46,8 +46,8 @@ public class MatrixInterpolation : MonoBehaviour
             
             var aPos = MatrixHelper.ExtractTranslation(A);
             var aScale = MatrixHelper.ExtractScale(A);
-            var aRot = MatrixHelper.ExtractRotation(A);
-            var bRot = MatrixHelper.ExtractRotation(B);
+            var aRot = MatrixHelper.ExtractRotation(A, vectors);
+            var bRot = MatrixHelper.ExtractRotation(B, vectors);
 
             // Get rotation
             bRot.w = bRot.w * -1; // invert rotation direction
@@ -107,11 +107,11 @@ public class MatrixInterpolationEditor : Editor
 
         var aPos = MatrixHelper.ExtractTranslation(matrixInterpolation.A);
         var aScale = MatrixHelper.ExtractScale(matrixInterpolation.A);
-        Quaternion aRotation = MatrixHelper.ExtractRotation(matrixInterpolation.A);
+        Quaternion aRotation = MatrixHelper.ExtractRotation(matrixInterpolation.A, matrixInterpolation.vectors);
         
         var bPos = MatrixHelper.ExtractTranslation(matrixInterpolation.B);
         var bScale = MatrixHelper.ExtractScale(matrixInterpolation.B);
-        Quaternion bRotation = MatrixHelper.ExtractRotation(matrixInterpolation.B);
+        Quaternion bRotation = MatrixHelper.ExtractRotation(matrixInterpolation.B, matrixInterpolation.vectors);
         
         
         if (Tools.current == Tool.Move)
