@@ -1,17 +1,23 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.UIElements;
 using Vectors;
 using Matrix4x4 = UnityEngine.Matrix4x4;
+using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
 [System.Serializable, ExecuteAlways, RequireComponent(typeof(VectorRenderer))]
 public class MatrixInterpolation : MonoBehaviour
 {
-    [SerializeField] private Dictionary<string, bool> Toggles = new Dictionary<string, bool>(3);
-
+    [SerializeField] private bool DoTranslation = true;
+    [SerializeField] private bool DoRotation = true;
+    [SerializeField] private bool DoScale = true;
+    
     private VectorRenderer vectors;
     [Range(0, 1)] public float Time = 0;
 
@@ -27,10 +33,6 @@ public class MatrixInterpolation : MonoBehaviour
         {
             vectors = gameObject.AddComponent<VectorRenderer>();
         }
-        
-        Toggles.Add("Translate", true);
-        Toggles.Add("Rotate", true);
-        Toggles.Add("Scale", true);
     }
 
     // Update is called once per frame
@@ -38,27 +40,56 @@ public class MatrixInterpolation : MonoBehaviour
     {
         using (vectors.Begin())
         {
+            // Reset cube and C matrix
+            CubeMesh cube = new CubeMesh();
+            C = Matrix4x4.identity;
+            
             var aPos = MatrixHelper.ExtractTranslation(A);
+            var aScale = MatrixHelper.ExtractScale(A);
+            var aRot = MatrixHelper.ExtractRotation(A);
+            var bRot = MatrixHelper.ExtractRotation(B);
+                
+            // Get rotation
+            bRot.w = bRot.w * -1; // invert rotation direction
+            Quaternion rotation = aRot * bRot; // each component in a multiplied by corresponding component in b
+            var rads = (1f - Time) * Math.Acos(aRot.w) + Time * Math.Acos(rotation.w);
+
             
             // Interpolate
-            var pos = (1f - Time) * aPos + Time * MatrixHelper.ExtractTranslation(B); // TODO: Base of handles in unity
+            Quaternion cRot = new Quaternion(rotation.x, rotation.y, rotation.z, (float)Math.Cos(rads));
+            var pos = (1f - Time) * aPos + Time * MatrixHelper.ExtractTranslation(B);
+            var scale = (1f - Time) * aScale + Time * MatrixHelper.ExtractScale(B);
+
+            // Update C matrix
+            if (DoTranslation)
+                MatrixHelper.SetTranslation(ref C, pos);
+            if (DoRotation)
+                MatrixHelper.SetRotation(ref C, cRot);
+            if (DoScale)
+                MatrixHelper.SetScale(ref C, scale);
             
+            // Update mesh using C matrix
+            for (int i = 0; i < cube.Vertices.Length; i++)
+            {
+                cube.Vertices[i] = C.MultiplyPoint(cube.Vertices[i]);
+            }
             
+            // Draw cube
             // x
-            vectors.Draw(pos, pos + transform.right, Color.red);
-            vectors.Draw(pos + Vector3.forward, pos + Vector3.forward + transform.right, Color.red);
-            vectors.Draw(pos + Vector3.up, pos + Vector3.up + transform.right, Color.red);
-            vectors.Draw(pos + Vector3.up + Vector3.forward, pos + Vector3.up + Vector3.forward + transform.right, Color.red);
-            // y
-            vectors.Draw(pos, pos + transform.up, Color.green);
-            vectors.Draw(pos + Vector3.forward, pos + Vector3.forward + transform.up, Color.green);
-            vectors.Draw(pos + Vector3.right, pos + Vector3.right + transform.up, Color.green);
-            vectors.Draw(pos + Vector3.right + Vector3.forward, pos + Vector3.right + Vector3.forward + transform.up, Color.green);
-            // z
-            vectors.Draw(pos, pos + transform.forward, Color.blue);
-            vectors.Draw(pos + Vector3.right, pos + Vector3.right + transform.forward, Color.blue);
-            vectors.Draw(pos + Vector3.up, pos + Vector3.up  + transform.forward, Color.blue);
-            vectors.Draw(pos + Vector3.up  + Vector3.right, pos + Vector3.up  + Vector3.right + transform.forward, Color.blue);
+            vectors.Draw(cube.Vertices[0], cube.Vertices[2], Color.red);
+            vectors.Draw(cube.Vertices[1], cube.Vertices[3], Color.red);
+            vectors.Draw(cube.Vertices[4], cube.Vertices[6], Color.red);
+            vectors.Draw(cube.Vertices[5], cube.Vertices[7], Color.red);
+            // // y
+            vectors.Draw(cube.Vertices[0], cube.Vertices[4], Color.green);
+            vectors.Draw(cube.Vertices[1], cube.Vertices[5], Color.green);
+            vectors.Draw(cube.Vertices[2], cube.Vertices[6], Color.green);
+            vectors.Draw(cube.Vertices[3], cube.Vertices[7], Color.green);
+            // // z
+            vectors.Draw(cube.Vertices[0], cube.Vertices[1], Color.blue);
+            vectors.Draw(cube.Vertices[2], cube.Vertices[3], Color.blue);
+            vectors.Draw(cube.Vertices[4], cube.Vertices[5], Color.blue);
+            vectors.Draw(cube.Vertices[6], cube.Vertices[7], Color.blue);
         }
     }
 }
@@ -73,15 +104,52 @@ public class MatrixInterpolationEditor : Editor
         
         EditorGUI.BeginChangeCheck();
 
-        var aPos = new Vector3(matrixInterpolation.A.m03, matrixInterpolation.A.m13, matrixInterpolation.A.m23);
-        var newTarget = Handles.PositionHandle(aPos, matrixInterpolation.transform.rotation);
+        var aPos = MatrixHelper.ExtractTranslation(matrixInterpolation.A);
+        var aScale = MatrixHelper.ExtractScale(matrixInterpolation.A);
+        Quaternion aRotation = MatrixHelper.ExtractRotation(matrixInterpolation.A);
+        
+        var bPos = MatrixHelper.ExtractTranslation(matrixInterpolation.B);
+        var bScale = MatrixHelper.ExtractScale(matrixInterpolation.B);
+        Quaternion bRotation = MatrixHelper.ExtractRotation(matrixInterpolation.B);
+        
+        
+        if (Tools.current == Tool.Move)
+        {
+            aPos = Handles.PositionHandle(aPos, Quaternion.identity);
+            bPos = Handles.PositionHandle(bPos, Quaternion.identity);
+        }
+        if (Tools.current == Tool.Rotate)
+        {
+            aRotation = Handles.RotationHandle(aRotation, aPos);
+            bRotation = Handles.RotationHandle(bRotation, bPos);
+        }
+        if (Tools.current == Tool.Scale)
+        {
+            aScale = Handles.ScaleHandle(aScale, aPos, Quaternion.identity);
+            bScale = Handles.ScaleHandle(bScale, bPos, Quaternion.identity);
+        }
+
         
         if(EditorGUI.EndChangeCheck())
         {
             Undo.RecordObject(matrixInterpolation, "Moved target");
-            MatrixHelper.SetTranslation(ref matrixInterpolation.A, matrixInterpolation.transform.position); // TODO: Left off here
-            MatrixHelper.SetTranslation(ref matrixInterpolation.B, newTarget); 
-            //MatrixHelper.SetTranslation(ref matrixInterpolation.C, matrixInterpolation.transform.position);
+            
+            if (Tools.current == Tool.Move)
+            {
+                MatrixHelper.SetTranslation(ref matrixInterpolation.A, aPos); 
+                MatrixHelper.SetTranslation(ref matrixInterpolation.B, bPos);
+            }
+            if (Tools.current == Tool.Rotate)
+            {
+                MatrixHelper.SetRotation(ref matrixInterpolation.A, aRotation); 
+                MatrixHelper.SetRotation(ref matrixInterpolation.B, bRotation); 
+            }
+            if (Tools.current == Tool.Scale)
+            {
+                MatrixHelper.SetScale(ref matrixInterpolation.A, aScale);
+                MatrixHelper.SetScale(ref matrixInterpolation.B, bScale);
+            }
+            
             EditorUtility.SetDirty(matrixInterpolation); // Update editor
         }
     }
@@ -97,45 +165,58 @@ public class MatrixInterpolationEditor : Editor
         EditorGUILayout.BeginVertical();
         
         // Matrix A ----------------------------
-        EditorGUILayout.PrefixLabel("Matrix A");
+        EditorGUILayout.PrefixLabel("Matrix A (Start)");
         EditorGUILayout.BeginVertical();
-        Matrix4x4 result = Matrix4x4.identity;;
+        Matrix4x4 aResult = Matrix4x4.identity;
         for (int i = 0; i < 4; i++)
         {
             EditorGUILayout.BeginHorizontal();
             for (int j = 0; j < 4; j++)
             {
-                result[i, j] = EditorGUILayout.FloatField(matrixInterpolation.A[i, j]);
+                aResult[i, j] = EditorGUILayout.FloatField(matrixInterpolation.A[i, j]);
             }
             EditorGUILayout.EndHorizontal();;
         }
         EditorGUILayout.EndVertical();
         // Matrix B ----------------------------
-        EditorGUILayout.PrefixLabel("Matrix B");
+        EditorGUILayout.PrefixLabel("Matrix B (End)");
         EditorGUILayout.BeginVertical();
-        result = Matrix4x4.identity;;
+        Matrix4x4 bResult = Matrix4x4.identity;
         for (int i = 0; i < 4; i++)
         {
             EditorGUILayout.BeginHorizontal();
             for (int j = 0; j < 4; j++)
             {
-                result[i, j] = EditorGUILayout.FloatField(matrixInterpolation.B[i, j]);
+                bResult[i, j] = EditorGUILayout.FloatField(matrixInterpolation.B[i, j]);
             }
             EditorGUILayout.EndHorizontal();;
         }
         EditorGUILayout.EndVertical();
         // Matrix C ----------------------------
-        EditorGUILayout.PrefixLabel("Matrix C");
+        EditorGUILayout.PrefixLabel("Matrix C (Interpolated)");
         EditorGUILayout.BeginVertical();
-        result = Matrix4x4.identity;;
         for (int i = 0; i < 4; i++)
         {
             EditorGUILayout.BeginHorizontal();
             for (int j = 0; j < 4; j++)
             {
-                result[i, j] = EditorGUILayout.FloatField(matrixInterpolation.C[i, j]);
+                EditorGUILayout.FloatField(matrixInterpolation.C[i, j]);
             }
-            EditorGUILayout.EndHorizontal();;
+            EditorGUILayout.EndHorizontal();
+        }
+        EditorGUILayout.EndVertical();
+        // ------------------------------------
+        
+        // TODO: DEBUG REMOVE ----------------------------
+        EditorGUILayout.PrefixLabel("vertices");
+        EditorGUILayout.BeginVertical();
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.FloatField(matrixInterpolation.C.GetColumn(1).x);
+            EditorGUILayout.FloatField(matrixInterpolation.C.GetColumn(1).y);
+            EditorGUILayout.FloatField(matrixInterpolation.C.GetColumn(1).z);
+            EditorGUILayout.FloatField(matrixInterpolation.C.GetColumn(1).w);
+            EditorGUILayout.EndHorizontal();
         }
         EditorGUILayout.EndVertical();
         // ------------------------------------
@@ -147,7 +228,8 @@ public class MatrixInterpolationEditor : Editor
         if(EditorGUI.EndChangeCheck())
         {
             Undo.RecordObject(matrixInterpolation, "Change matrix");
-            matrixInterpolation.A = result;
+            matrixInterpolation.A = aResult;
+            matrixInterpolation.B = bResult;
             EditorUtility.SetDirty(matrixInterpolation);
         }
     }
