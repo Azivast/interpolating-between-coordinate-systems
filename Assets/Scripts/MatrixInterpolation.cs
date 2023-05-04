@@ -48,25 +48,26 @@ public class MatrixInterpolation : MonoBehaviour
             var aScale = MatrixHelper.ExtractScale(A);
             var aRot = MatrixHelper.ExtractRotation(A);
             var bRot = MatrixHelper.ExtractRotation(B);
-                
+
             // Get rotation
             bRot.w = bRot.w * -1; // invert rotation direction
             Quaternion rotation = aRot * bRot; // each component in a multiplied by corresponding component in b
-            var rads = (1f - Time) * Math.Acos(aRot.w) + Time * Math.Acos(rotation.w);
 
-            
             // Interpolate
-            Quaternion cRot = new Quaternion(rotation.x, rotation.y, rotation.z, (float)Math.Cos(rads));
+            var rads = (1f - Time) * Mathf.Acos(aRot.w) + Time * Mathf.Acos(rotation.w);
             var pos = (1f - Time) * aPos + Time * MatrixHelper.ExtractTranslation(B);
             var scale = (1f - Time) * aScale + Time * MatrixHelper.ExtractScale(B);
+            
+            Quaternion cRot = new Quaternion(rotation.x, rotation.y, rotation.z, Mathf.Cos(rads));
 
             // Update C matrix
-            if (DoTranslation)
-                MatrixHelper.SetTranslation(ref C, pos);
-            if (DoRotation)
-                MatrixHelper.SetRotation(ref C, cRot);
             if (DoScale)
                 MatrixHelper.SetScale(ref C, scale);
+            if (DoRotation)
+                MatrixHelper.SetRotation(ref C, cRot);
+            if (DoTranslation)
+                MatrixHelper.SetTranslation(ref C, pos);
+
             
             // Update mesh using C matrix
             for (int i = 0; i < cube.Vertices.Length; i++)

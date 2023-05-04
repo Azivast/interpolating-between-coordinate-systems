@@ -25,14 +25,15 @@ public static class MatrixHelper
 
         // Smallest dot product = most orthogonal axis
         float minValue = Math.Min(dotx, Math.Min(doty, dotz));
+        float rads = Mathf.Acos(minValue);
         Vector3 normal, rotationAxis;
         // Calc cross product -> axis around which rotation takes place //TODO: Less repetitive code
-        if (minValue == dotx)
+        if (Math.Abs(minValue - dotx) < 0.0001f)
         {
             normal = matrix.GetColumn(0).normalized;
-            rotationAxis = Vector3.Cross(normal, Vector3.right);
+            rotationAxis = Vector3.Cross(Vector3.right, normal);
         }
-        else if (minValue == doty)
+        else if (Math.Abs(minValue - doty) < 0.0001f)
         {
             normal = matrix.GetColumn(1).normalized;
             rotationAxis = Vector3.Cross(normal, Vector3.up);
@@ -43,23 +44,23 @@ public static class MatrixHelper
             rotationAxis = Vector3.Cross(normal, Vector3.forward);
         }
 
+        rotationAxis = (rotationAxis/Mathf.Sin(rads))*Mathf.Sin(rads/2);
+
         // Create quaternion of rotation
-        return new Quaternion(rotationAxis.x, rotationAxis.y, rotationAxis.z, minValue);
+        return new Quaternion(rotationAxis.x, rotationAxis.y, rotationAxis.z, Mathf.Cos(rads/2));
     }
     public static void SetRotation(ref Matrix4x4 matrix, Quaternion rotation)
     {
-        Quaternion conjugate = new Quaternion(-rotation.x, -rotation.y, -rotation.z, rotation.w);
-        // Quaternion inverse = conjugate / Mathf.Sqrt(rotation.x * rotation.x +  // TODO: are we using pure rotation quaternions? If so inverse = conjugate
-        //                                             rotation.y * rotation.y +
-        //                                             rotation.z * rotation.z +
-        //                                             rotation.w * rotation.w);
+        // Technically calculation for conjugate. But inverse == conjugate when using pure rotation quaternions
+        Quaternion inverse = new Quaternion(-rotation.x, -rotation.y, -rotation.z, rotation.w); 
+
         Quaternion x, y, z;
-        x = conjugate * new Quaternion(1, 0 ,0 ,0) * rotation; // inverse = conjugate TODO see above
-        y = conjugate * new Quaternion(0, 1 ,0 ,0) * rotation;
-        z = conjugate * new Quaternion(0, 1 ,1 ,0) * rotation;
-        matrix.SetRow(0, new Vector4(x.x, x.y, x.z, 0));
-        matrix.SetRow(1, new Vector4(y.x, y.y, y.z, 0));
-        matrix.SetRow(2, new Vector4(z.x, z.y, z.z, 0));
+        x = inverse * new Quaternion(1, 0 ,0 ,0) * rotation;
+        y = inverse * new Quaternion(0, 1 ,0 ,0) * rotation;
+        z = inverse * new Quaternion(0, 0 ,1 ,0) * rotation;
+        matrix.SetColumn(0, new Vector4(x.x, x.y, x.z, 0));
+        matrix.SetColumn(1, new Vector4(y.x, y.y, y.z, 0));
+        matrix.SetColumn(2, new Vector4(z.x, z.y, z.z, 0));
     }
     
     public static Vector3 ExtractScale(Matrix4x4 matrix)
@@ -94,11 +95,4 @@ public static class MatrixHelper
         matrix.m12 = z.y; 
         matrix.m22 = z.z;
     }
-
-    // static Matrix4x4 Interpolate(Matrix4x4 start, Matrix4x4 end, float t)
-    // {
-    //     Matrix4x4 result = default;
-    //     //TODO: interpolate between start and final with delta t
-    //     return result;
-    // }
 }
