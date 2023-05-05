@@ -17,7 +17,15 @@ public static class MatrixHelper
         matrix.m13 = translation.y; 
         matrix.m23 = translation.z;
     }
-    
+
+    private static float AngleFromProjection(Vector3 vector, Vector3 normal, Vector3 prim)
+    {
+        var projVecPlane = Vector3.ProjectOnPlane(vector, normal);
+        var projPrimPlane = Vector3.ProjectOnPlane(prim, normal);
+        var dot = Vector3.Dot(projVecPlane, projPrimPlane);
+
+        return Mathf.Acos(dot / (projVecPlane.magnitude * projPrimPlane.magnitude));
+    }
     public static Quaternion ExtractRotation(Matrix4x4 matrix, VectorRenderer vectors)
     {
         Vector3 scale = ExtractScale(matrix);
@@ -33,45 +41,38 @@ public static class MatrixHelper
         Vector3 crossX = Vector3.Cross(Vector3.right, x);
         Vector3 crossY = Vector3.Cross(Vector3.up, y);
         Vector3 crossZ = Vector3.Cross(Vector3.forward, z);
-
+    
         Vector3 rotationAxis = (x + y + z);
         Vector3 normal = rotationAxis.normalized;
-        if (rotationAxis == Vector3.one) return Quaternion.identity;
-        
-        
-        float smallestCos = Math.Min(cosX, Math.Min(cosY, cosZ));
-        
         float angle, halfSin, halfCos;
         
-        if (Math.Abs(smallestCos - cosX) < 0.0001f) // x
+        if (cosX < cosY && cosX < cosZ) // x
         {
             var projPlane = crossX - (Vector3.Dot(crossX, normal)) / (matrix.GetColumn(0).magnitude * matrix.GetColumn(0).magnitude) * normal; // vector, plane, and normal makes triangle, solve for plane      // x - ((x*n)/n.magnetude^)*n
             projPlane.Normalize();
-            angle =  Mathf.Acos(Vector3.Dot(crossX, projPlane));
+            angle =  AngleFromProjection(x, normal, Vector3.right);
         }
-        else if (Math.Abs(smallestCos - cosY) < 0.0001f) // y
+        else if (cosY < cosX && cosY < cosZ) // y
         {
-            var projPlane = crossY - (Vector3.Dot(crossY, normal)) / (matrix.GetColumn(1).magnitude * matrix.GetColumn(1).magnitude) * normal;
+            var projPlane = crossY - (Vector3.Dot(y, normal)) / (matrix.GetColumn(1).magnitude * matrix.GetColumn(1).magnitude) * normal;
             projPlane.Normalize();
-            angle =  Mathf.Acos(Vector3.Dot(crossY, projPlane));
+            angle =  AngleFromProjection(crossY, normal, Vector3.up);
         }
-        else if (Math.Abs(smallestCos - cosZ) < 0.0001f) // z
+        else if (cosZ < cosX && cosZ < cosY)  // z
         {
-            var projPlane = crossZ - (Vector3.Dot(crossZ, normal)) /
+            var projPlane = crossZ - (Vector3.Dot(z, normal)) /
                 (matrix.GetColumn(2).magnitude * matrix.GetColumn(2).magnitude) * normal;
             projPlane.Normalize();
-            angle = Mathf.Acos(Vector3.Dot(crossZ, projPlane));
+            angle = AngleFromProjection(crossZ, normal, Vector3.forward);
         }
-        else throw (new Exception("Invalid matrix rotation"));
-
-        // halfSin = Mathf.Sqrt((1 - angle)/2);
-        // halfCos = Mathf.Sqrt((1 + angle)/2);
+        else return Quaternion.identity;
+        
         halfSin = Mathf.Sin(angle / 2);
         halfCos = Mathf.Cos(angle / 2);
         
         //DEBUG: TODO REMOVE
         vectors.Draw(Vector3.zero, Vector3.zero + rotationAxis, Color.cyan);
-
+    
         return new Quaternion(
             normal.x*scale.x*halfSin,
             normal.y*scale.y*halfSin, 
