@@ -34,6 +34,45 @@ public class MatrixInterpolation : MonoBehaviour
             vectors = gameObject.AddComponent<VectorRenderer>();
         }
     }
+    
+    // Slerp implementation
+    public Quaternion InterpolateQuaternions(Quaternion start, Quaternion end, float time)
+    {
+        // Calc cosine of angle between quaternions (dot product)
+        float cos = start.x * end.x + start.y * end.y + start.z * end.z + start.w * end.w;
+        
+        // If dot product is negative: negate one quaternion to take shorter arc
+        if (cos < 0f)
+        {
+            end = new Quaternion(-end.x, -end.y, -end.z, -end.z);
+            cos *= -1;
+        }
+        // Avoid div by 0 by using lerp
+        float kStart, kEnd;
+        if (cos > 0.9999f)
+        {
+            kStart = 1.0f - time;
+            kEnd = time;
+        }
+        else
+        {
+            float sin = Mathf.Sqrt(1f - cos * cos);
+
+            float angle = Mathf.Atan2(sin, cos);
+
+            float oneOverSin = 1 / sin;
+
+            kStart = Mathf.Sin(((1f - time) * angle) * oneOverSin);
+            kEnd = Mathf.Sin((time * angle) * oneOverSin);
+        }
+
+        return new Quaternion(
+            start.x * kStart + end.x * kEnd,
+            start.y * kStart + end.y * kEnd,
+            start.z * kStart + end.z * kEnd,
+            start.w * kStart + end.w * kEnd);
+
+    }
 
     // Update is called once per frame
     void Update()
@@ -49,22 +88,25 @@ public class MatrixInterpolation : MonoBehaviour
             var aRot = MatrixHelper.ExtractRotation(A, vectors);
             var bRot = MatrixHelper.ExtractRotation(B, vectors);
 
-            // Get rotation
-            bRot.w = bRot.w * -1; // invert rotation direction
-            Quaternion rotation = aRot * bRot; // each component in a multiplied by corresponding component in b
+            
 
             // Interpolate
-            var rads = (1f - Time) * Mathf.Acos(aRot.w) + Time * Mathf.Acos(rotation.w);
             var pos = (1f - Time) * aPos + Time * MatrixHelper.ExtractTranslation(B);
             var scale = (1f - Time) * aScale + Time * MatrixHelper.ExtractScale(B);
             
-            Quaternion cRot = new Quaternion(rotation.x, rotation.y, rotation.z, Mathf.Cos(rads));
+            // Interpolate rotation
+            // Quaternion rotation = aRot * new Quaternion(bRot.x, bRot.y, bRot.z, -bRot.w);
+            // var rads = (1f - Time) * Mathf.Acos(aRot.w)*2 + Time * Mathf.Acos(rotation.w)*2;
+            Quaternion cRot = InterpolateQuaternions(aRot, bRot, Time);
+            
+            //TODO 
 
             // Update C matrix
-            if (DoScale)
-                MatrixHelper.SetScale(ref C, scale);
             if (DoRotation)
-                MatrixHelper.SetRotation(ref C, cRot);
+                MatrixHelper.SetRotation(ref C, MatrixHelper.ExtractRotation(A, vectors));
+                //MatrixHelper.SetRotation(ref C, aRot);
+            if (DoScale)
+                MatrixHelper.SetScale(ref C, aScale);
             if (DoTranslation)
                 MatrixHelper.SetTranslation(ref C, pos);
 
@@ -203,20 +245,6 @@ public class MatrixInterpolationEditor : Editor
             {
                 EditorGUILayout.FloatField(matrixInterpolation.C[i, j]);
             }
-            EditorGUILayout.EndHorizontal();
-        }
-        EditorGUILayout.EndVertical();
-        // ------------------------------------
-        
-        // TODO: DEBUG REMOVE ----------------------------
-        EditorGUILayout.PrefixLabel("vertices");
-        EditorGUILayout.BeginVertical();
-        {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.FloatField(matrixInterpolation.C.GetColumn(1).x);
-            EditorGUILayout.FloatField(matrixInterpolation.C.GetColumn(1).y);
-            EditorGUILayout.FloatField(matrixInterpolation.C.GetColumn(1).z);
-            EditorGUILayout.FloatField(matrixInterpolation.C.GetColumn(1).w);
             EditorGUILayout.EndHorizontal();
         }
         EditorGUILayout.EndVertical();

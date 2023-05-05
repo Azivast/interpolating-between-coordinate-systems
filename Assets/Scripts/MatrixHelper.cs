@@ -20,39 +20,56 @@ public static class MatrixHelper
     
     public static Quaternion ExtractRotation(Matrix4x4 matrix, VectorRenderer vectors)
     {
-        float dotx = Vector3.Dot(((Vector3)matrix.GetColumn(0)).normalized, Vector3.right);
-        float doty = Vector3.Dot(((Vector3)matrix.GetColumn(1)).normalized, Vector3.up);
-        float dotz = Vector3.Dot(((Vector3)matrix.GetColumn(2)).normalized, Vector3.forward);
-
-        // Smallest dot product = most orthogonal axis
-        float minValue = Math.Min(dotx, Math.Min(doty, dotz));
-        float rads = Mathf.Acos(minValue);
-        Vector3 normal, rotationAxis;
-        // Calc cross product -> axis around which rotation takes place //TODO: Less repetitive code
-        if (Math.Abs(minValue - dotx) < 0.0001f)
-        {
-            normal = matrix.GetColumn(0).normalized;
-            rotationAxis = Vector3.Cross(Vector3.right, normal);
-        }
-        else if (Math.Abs(minValue - doty) < 0.0001f)
-        {
-            normal = matrix.GetColumn(1).normalized;
-            rotationAxis = Vector3.Cross(normal, Vector3.up);
-        }
-        else //if (minValue == dotz)
-        {
-            normal = matrix.GetColumn(2).normalized;
-            rotationAxis = Vector3.Cross(normal, Vector3.forward);
-        }
-        rotationAxis = (rotationAxis/Mathf.Sin(rads))*Mathf.Sin(rads/2);
-        rotationAxis.Normalize();
+        Vector3 x = ((Vector3)matrix.GetColumn(0)).normalized;
+        Vector3 y = ((Vector3)matrix.GetColumn(1)).normalized;
+        Vector3 z = ((Vector3)matrix.GetColumn(2)).normalized;
         
-        // DEBUG TODO 
-        vectors.Draw(matrix.GetColumn(3), (Vector3)rotationAxis + (Vector3)matrix.GetColumn(3), Color.yellow);
+        // Get cosine value of each axle pair
+        float cosX = Vector3.Dot(x, Vector3.right);
+        float cosY = Vector3.Dot(y, Vector3.up);
+        float cosZ = Vector3.Dot(z, Vector3.forward);
         
+        Vector3 crossX = Vector3.Cross(x, Vector3.right);
+        Vector3 crossY = Vector3.Cross(x, Vector3.right);
+        Vector3 crossZ = Vector3.Cross(x, Vector3.right);
 
-        // Create quaternion of rotation
-        return new Quaternion(rotationAxis.x, rotationAxis.y, rotationAxis.z, Mathf.Cos(rads/2));
+        Vector3 rotationAxis = (x + y + z);
+        Vector3 normal = rotationAxis.normalized;
+        
+        float largestCos = Math.Max(cosX, Math.Max(cosY, cosZ));
+        
+        float angle, halfSin, halfCos;
+        
+        if (Math.Abs(largestCos - cosX) < 0.0001f) // x
+        {
+            var plane = crossX - (Vector3.Dot(crossX, normal)) / (matrix.GetColumn(0).magnitude * matrix.GetColumn(0).magnitude) * normal; // vector, plane, and normal makes triangle, solve for plane      // x - ((x*n)/n.magnetude^)*n
+            plane.Normalize();
+            angle =  Mathf.Acos(Vector3.Dot(crossX, plane));
+        }
+        else if (Math.Abs(largestCos - cosY) < 0.0001f) // y
+        {
+            var plane = crossY - (Vector3.Dot(crossY, normal)) / (matrix.GetColumn(1).magnitude * matrix.GetColumn(1).magnitude) * normal;
+            plane.Normalize();
+            angle =  Mathf.Acos(Vector3.Dot(crossY, plane));
+        }
+        else  if (Math.Abs(largestCos - cosZ) < 0.0001f) // z
+        {
+            var plane = crossZ - (Vector3.Dot(crossZ, normal)) / (matrix.GetColumn(2).magnitude * matrix.GetColumn(2).magnitude) * normal;
+            plane.Normalize();
+            angle = Mathf.Acos(Vector3.Dot(crossZ, plane));
+        }
+        else return Quaternion.identity;
+
+        // halfSin = Mathf.Sqrt((1 - angle)/2);
+        // halfCos = Mathf.Sqrt((1 + angle)/2);
+        halfSin = Mathf.Sin(angle / 2);
+        halfCos = Mathf.Cos(angle / 2);
+        
+        return new Quaternion(
+            rotationAxis.x*halfSin,
+            rotationAxis.y*halfSin, 
+            rotationAxis.z*halfSin, 
+            halfCos);
     }
     public static void SetRotation(ref Matrix4x4 matrix, Quaternion rotation)
     {
