@@ -29,7 +29,7 @@ public class MatrixInterpolation : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if (TryGetComponent<VectorRenderer>(out vectors)) //TODO: Creates 2 ??
+        if (!TryGetComponent<VectorRenderer>(out vectors)) //TODO: Creates 2 ??
         {
             vectors = gameObject.AddComponent<VectorRenderer>();
         }
@@ -100,13 +100,13 @@ public class MatrixInterpolation : MonoBehaviour
             Quaternion cRot = InterpolateQuaternions(aRot, bRot, Time);
             
             //TODO 
+            Debug.Log(MatrixHelper.ExtractRotation(B, vectors));
 
             // Update C matrix
             if (DoRotation)
-                MatrixHelper.SetRotation(ref C, MatrixHelper.ExtractRotation(A, vectors));
-                //MatrixHelper.SetRotation(ref C, aRot);
+                MatrixHelper.SetRotation(ref C, MatrixHelper.ExtractRotation(B, vectors));
             if (DoScale)
-                MatrixHelper.SetScale(ref C, aScale);
+                MatrixHelper.SetScale(ref C, scale);
             if (DoTranslation)
                 MatrixHelper.SetTranslation(ref C, pos);
 
