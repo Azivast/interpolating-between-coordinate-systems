@@ -24,11 +24,12 @@ public static class MatrixHelper
     {
         Quaternion result;
 
-        // Extract each axis from the matrix
-        Vector3 x = ((Vector3)matrix.GetColumn(0)).normalized;
-        Vector3 y = ((Vector3)matrix.GetColumn(1)).normalized;
-        Vector3 z = ((Vector3)matrix.GetColumn(2)).normalized;
-
+        // Extract each axis and scale from the matrix
+        Vector3 x = matrix.GetColumn(0);
+        Vector3 y = matrix.GetColumn(1);
+        Vector3 z = matrix.GetColumn(2);
+        x.Normalize(); y.Normalize(); z.Normalize();
+        
         // TODO: Explain
         result.x = Mathf.Sqrt( Mathf.Max( 0, 1 + x.x - y.y - z.z ) ) / 2; 
         result.y = Mathf.Sqrt( Mathf.Max( 0, 1 - x.x + y.y - z.z ) ) / 2; 
@@ -42,7 +43,7 @@ public static class MatrixHelper
         return result;
     }
 
-    public static void SetRotation(ref Matrix4x4 matrix, Quaternion rotation)
+    public static void SetRotation(ref Matrix4x4 matrix, Quaternion rotation, Vector3 scale)
     {
         rotation.Normalize(); // TODO illustrate / do manually
         // Technically calculation for conjugate. But inverse == conjugate when using pure rotation quaternions
@@ -54,9 +55,13 @@ public static class MatrixHelper
         y = inverse * new Quaternion(0, 1, 0, 0) * rotation;
         z = inverse * new Quaternion(0, 0, 1, 0) * rotation;
         
-        matrix.SetColumn(0, new Vector4(x.x, y.x, z.x, 0));
-        matrix.SetColumn(1, new Vector4(x.y, y.y, z.y, 0));
-        matrix.SetColumn(2, new Vector4(x.z, y.z, z.z, 0));
+        var newX = new Vector4(x.x, y.x, z.x, 0).normalized * scale.x;
+        var newY = new Vector4(x.y, y.y, z.y, 0).normalized * scale.y;
+        var newZ = new Vector4(x.z, y.z, z.z, 0).normalized * scale.z;
+        
+        matrix.SetColumn(0, newX);
+        matrix.SetColumn(1, newY);
+        matrix.SetColumn(2, newZ);
     }
     
     public static Vector3 ExtractScale(Matrix4x4 matrix)

@@ -103,10 +103,10 @@ public class MatrixInterpolation : MonoBehaviour
             Quaternion cRot = InterpolateQuaternions(aRot, bRot, Time);
 
             // Update C matrix
-            if (DoRotation)
-                MatrixHelper.SetRotation(ref C, cRot);
             if (DoScale)
                 MatrixHelper.SetScale(ref C, cScale);
+            if (DoRotation)
+                MatrixHelper.SetRotation(ref C, cRot, cScale);
             if (DoTranslation)
                 MatrixHelper.SetTranslation(ref C, cPos);
 
@@ -184,8 +184,8 @@ public class MatrixInterpolationEditor : Editor
             }
             if (Tools.current == Tool.Rotate)
             {
-                MatrixHelper.SetRotation(ref matrixInterpolation.A, aRotation); 
-                MatrixHelper.SetRotation(ref matrixInterpolation.B, bRotation); 
+                MatrixHelper.SetRotation(ref matrixInterpolation.A, aRotation, aScale); 
+                MatrixHelper.SetRotation(ref matrixInterpolation.B, bRotation, bScale); 
             }
             if (Tools.current == Tool.Scale)
             {
