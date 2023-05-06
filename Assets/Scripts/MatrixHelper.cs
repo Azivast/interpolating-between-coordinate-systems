@@ -30,16 +30,14 @@ public static class MatrixHelper
         Vector3 z = ((Vector3)matrix.GetColumn(2)).normalized;
 
         // TODO: Explain
-        result.x = Mathf.Sqrt(Mathf.Max(0, 1 + x.x - y.y - z.z)) / 2; // max() -> protect against rounding errors
-        result.y = Mathf.Sqrt(Mathf.Max(0, 1 - x.x + y.y - z.z)) / 2;
-        result.z = Mathf.Sqrt(Mathf.Max(0, 1 - x.x - y.y + z.z)) / 2;
-        result.w = Mathf.Sqrt(Mathf.Max(0, 1 + x.x + y.y + z.z)) / 2;
-
-
-        // TODO: Explain
-        result.x *= Mathf.Sign(result.x * (z.y - y.z));
-        result.y *= Mathf.Sign(result.y * (x.z - z.x));
-        result.z *= Mathf.Sign(result.z * (y.x - x.y));
+        result.x = Mathf.Sqrt( Mathf.Max( 0, 1 + x.x - y.y - z.z ) ) / 2; 
+        result.y = Mathf.Sqrt( Mathf.Max( 0, 1 - x.x + y.y - z.z ) ) / 2; 
+        result.z = Mathf.Sqrt( Mathf.Max( 0, 1 - x.x - y.y + z.z ) ) / 2; 
+        result.w = Mathf.Sqrt( Mathf.Max( 0, 1 + x.x + y.y + z.z ) ) / 2; 
+        
+        result.x *= Mathf.Sign( result.x * ( y.z - z.y ) );
+        result.y *= Mathf.Sign( result.y * ( z.x - x.z ) );
+        result.z *= Mathf.Sign( result.z * ( x.y - y.x ) );
 
         return result;
     }
@@ -49,13 +47,13 @@ public static class MatrixHelper
         rotation.Normalize(); // TODO illustrate / do manually
         // Technically calculation for conjugate. But inverse == conjugate when using pure rotation quaternions
         Quaternion inverse = new Quaternion(-rotation.x, -rotation.y, -rotation.z, rotation.w); 
-
+        
         // quaternion to matrix = q*v*q^-1
         Quaternion x, y, z;
         x = inverse * new Quaternion(1, 0, 0, 0) * rotation;
         y = inverse * new Quaternion(0, 1, 0, 0) * rotation;
         z = inverse * new Quaternion(0, 0, 1, 0) * rotation;
-
+        
         matrix.SetColumn(0, new Vector4(x.x, y.x, z.x, 0));
         matrix.SetColumn(1, new Vector4(x.y, y.y, z.y, 0));
         matrix.SetColumn(2, new Vector4(x.z, y.z, z.z, 0));

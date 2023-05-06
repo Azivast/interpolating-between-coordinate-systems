@@ -101,9 +101,6 @@ public class MatrixInterpolation : MonoBehaviour
             // Quaternion rotation = aRot * new Quaternion(bRot.x, bRot.y, bRot.z, -bRot.w);
             // var rads = (1f - Time) * Mathf.Acos(aRot.w)*2 + Time * Mathf.Acos(rotation.w)*2;
             Quaternion cRot = InterpolateQuaternions(aRot, bRot, Time);
-            
-            //TODO 
-            Debug.Log(MatrixHelper.ExtractRotation(B));
 
             // Update C matrix
             if (DoRotation)
@@ -161,8 +158,8 @@ public class MatrixInterpolationEditor : Editor
         
         if (Tools.current == Tool.Rotate)
         {
-            aRotation = Handles.RotationHandle(Quaternion.identity, aPos);
-            bRotation = Handles.RotationHandle(Quaternion.identity, bPos);
+            aRotation = Handles.RotationHandle(aRotation, aPos);
+            bRotation = Handles.RotationHandle(bRotation, bPos);
         }
         if (Tools.current == Tool.Move)
         {
