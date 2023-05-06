@@ -85,14 +85,17 @@ public class MatrixInterpolation : MonoBehaviour
             
             var aPos = MatrixHelper.ExtractTranslation(A);
             var aScale = MatrixHelper.ExtractScale(A);
-            var aRot = MatrixHelper.ExtractRotation(A, vectors);
-            var bRot = MatrixHelper.ExtractRotation(B, vectors);
+            var aRot = MatrixHelper.ExtractRotation(A);
+            
+            var bPos = MatrixHelper.ExtractTranslation(B);
+            var bScale = MatrixHelper.ExtractScale(B);
+            var bRot = MatrixHelper.ExtractRotation(B);
 
             
 
-            // Interpolate
-            var pos = (1f - Time) * aPos + Time * MatrixHelper.ExtractTranslation(B);
-            var scale = (1f - Time) * aScale + Time * MatrixHelper.ExtractScale(B);
+            // Interpolate position & scale
+            var cPos = (1f - Time) * aPos + Time * bPos;
+            var cScale = (1f - Time) * aScale + Time * bScale;
             
             // Interpolate rotation
             // Quaternion rotation = aRot * new Quaternion(bRot.x, bRot.y, bRot.z, -bRot.w);
@@ -100,15 +103,15 @@ public class MatrixInterpolation : MonoBehaviour
             Quaternion cRot = InterpolateQuaternions(aRot, bRot, Time);
             
             //TODO 
-            Debug.Log(MatrixHelper.ExtractRotation(B, vectors));
+            Debug.Log(MatrixHelper.ExtractRotation(B));
 
             // Update C matrix
             if (DoRotation)
-                MatrixHelper.SetRotation(ref C, MatrixHelper.ExtractRotation(B, vectors));
+                MatrixHelper.SetRotation(ref C, cRot);
             if (DoScale)
-                MatrixHelper.SetScale(ref C, scale);
+                MatrixHelper.SetScale(ref C, cScale);
             if (DoTranslation)
-                MatrixHelper.SetTranslation(ref C, pos);
+                MatrixHelper.SetTranslation(ref C, cPos);
 
             
             // Update mesh using C matrix
@@ -149,27 +152,27 @@ public class MatrixInterpolationEditor : Editor
 
         var aPos = MatrixHelper.ExtractTranslation(matrixInterpolation.A);
         var aScale = MatrixHelper.ExtractScale(matrixInterpolation.A);
-        Quaternion aRotation = MatrixHelper.ExtractRotation(matrixInterpolation.A, matrixInterpolation.vectors);
+        Quaternion aRotation = MatrixHelper.ExtractRotation(matrixInterpolation.A);
         
         var bPos = MatrixHelper.ExtractTranslation(matrixInterpolation.B);
         var bScale = MatrixHelper.ExtractScale(matrixInterpolation.B);
-        Quaternion bRotation = MatrixHelper.ExtractRotation(matrixInterpolation.B, matrixInterpolation.vectors);
+        Quaternion bRotation = MatrixHelper.ExtractRotation(matrixInterpolation.B);
         
         
-        if (Tools.current == Tool.Move)
-        {
-            aPos = Handles.PositionHandle(aPos, Quaternion.identity);
-            bPos = Handles.PositionHandle(bPos, Quaternion.identity);
-        }
         if (Tools.current == Tool.Rotate)
         {
-            aRotation = Handles.RotationHandle(aRotation, aPos);
-            bRotation = Handles.RotationHandle(bRotation, bPos);
+            aRotation = Handles.RotationHandle(Quaternion.identity, aPos);
+            bRotation = Handles.RotationHandle(Quaternion.identity, bPos);
+        }
+        if (Tools.current == Tool.Move)
+        {
+            aPos = Handles.PositionHandle(aPos, aRotation);
+            bPos = Handles.PositionHandle(bPos, bRotation);
         }
         if (Tools.current == Tool.Scale)
         {
-            aScale = Handles.ScaleHandle(aScale, aPos, Quaternion.identity);
-            bScale = Handles.ScaleHandle(bScale, bPos, Quaternion.identity);
+            aScale = Handles.ScaleHandle(aScale, aPos, aRotation);
+            bScale = Handles.ScaleHandle(bScale, bPos, bRotation);
         }
 
         
@@ -250,10 +253,16 @@ public class MatrixInterpolationEditor : Editor
         EditorGUILayout.EndVertical();
         // ------------------------------------
 
+        // TODO: Replace with own code
+        EditorGUILayout.PrefixLabel("Determinants, A, B, and C");
+        EditorGUILayout.FloatField(matrixInterpolation.A.determinant);
+        EditorGUILayout.FloatField(matrixInterpolation.B.determinant);
+        EditorGUILayout.FloatField(matrixInterpolation.C.determinant);
+        
+        
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
-        
-        
+
         if(EditorGUI.EndChangeCheck())
         {
             Undo.RecordObject(matrixInterpolation, "Change matrix");

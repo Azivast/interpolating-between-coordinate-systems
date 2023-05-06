@@ -18,79 +18,47 @@ public static class MatrixHelper
         matrix.m23 = translation.z;
     }
 
-    private static float AngleFromProjection(Vector3 vector, Vector3 normal, Vector3 prim)
+    // Using algorithm presented here:
+    // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+    public static Quaternion ExtractRotation(Matrix4x4 matrix)
     {
-        var projVecPlane = Vector3.ProjectOnPlane(vector, normal);
-        var projPrimPlane = Vector3.ProjectOnPlane(prim, normal);
-        var dot = Vector3.Dot(projVecPlane, projPrimPlane);
+        Quaternion result;
 
-        return Mathf.Acos(dot / (projVecPlane.magnitude * projPrimPlane.magnitude));
-    }
-    public static Quaternion ExtractRotation(Matrix4x4 matrix, VectorRenderer vectors)
-    {
-        Vector3 scale = ExtractScale(matrix);
-        
+        // Extract each axis from the matrix
         Vector3 x = ((Vector3)matrix.GetColumn(0)).normalized;
         Vector3 y = ((Vector3)matrix.GetColumn(1)).normalized;
         Vector3 z = ((Vector3)matrix.GetColumn(2)).normalized;
-        
-        // Get cosine value & normal of each axle pair
-        float cosX = Vector3.Dot(x, Vector3.right);
-        float cosY = Vector3.Dot(y, Vector3.up);
-        float cosZ = Vector3.Dot(z, Vector3.forward);
-        Vector3 crossX = Vector3.Cross(Vector3.right, x);
-        Vector3 crossY = Vector3.Cross(Vector3.up, y);
-        Vector3 crossZ = Vector3.Cross(Vector3.forward, z);
-    
-        Vector3 rotationAxis = (x + y + z);
-        Vector3 normal = rotationAxis.normalized;
-        float angle, halfSin, halfCos;
-        
-        if (cosX < cosY && cosX < cosZ) // x
-        {
-            var projPlane = crossX - (Vector3.Dot(crossX, normal)) / (matrix.GetColumn(0).magnitude * matrix.GetColumn(0).magnitude) * normal; // vector, plane, and normal makes triangle, solve for plane      // x - ((x*n)/n.magnetude^)*n
-            projPlane.Normalize();
-            angle =  AngleFromProjection(x, normal, Vector3.right);
-        }
-        else if (cosY < cosX && cosY < cosZ) // y
-        {
-            var projPlane = crossY - (Vector3.Dot(y, normal)) / (matrix.GetColumn(1).magnitude * matrix.GetColumn(1).magnitude) * normal;
-            projPlane.Normalize();
-            angle =  AngleFromProjection(crossY, normal, Vector3.up);
-        }
-        else if (cosZ < cosX && cosZ < cosY)  // z
-        {
-            var projPlane = crossZ - (Vector3.Dot(z, normal)) /
-                (matrix.GetColumn(2).magnitude * matrix.GetColumn(2).magnitude) * normal;
-            projPlane.Normalize();
-            angle = AngleFromProjection(crossZ, normal, Vector3.forward);
-        }
-        else return Quaternion.identity;
-        
-        halfSin = Mathf.Sin(angle / 2);
-        halfCos = Mathf.Cos(angle / 2);
-        
-        //DEBUG: TODO REMOVE
-        vectors.Draw(Vector3.zero, Vector3.zero + rotationAxis, Color.cyan);
-    
-        return new Quaternion(
-            normal.x*scale.x*halfSin,
-            normal.y*scale.y*halfSin, 
-            normal.z*scale.z*halfSin, 
-            scale.x*halfCos);
+
+        // TODO: Explain
+        result.x = Mathf.Sqrt(Mathf.Max(0, 1 + x.x - y.y - z.z)) / 2; // max() -> protect against rounding errors
+        result.y = Mathf.Sqrt(Mathf.Max(0, 1 - x.x + y.y - z.z)) / 2;
+        result.z = Mathf.Sqrt(Mathf.Max(0, 1 - x.x - y.y + z.z)) / 2;
+        result.w = Mathf.Sqrt(Mathf.Max(0, 1 + x.x + y.y + z.z)) / 2;
+
+
+        // TODO: Explain
+        result.x *= Mathf.Sign(result.x * (z.y - y.z));
+        result.y *= Mathf.Sign(result.y * (x.z - z.x));
+        result.z *= Mathf.Sign(result.z * (y.x - x.y));
+
+        return result;
     }
+
     public static void SetRotation(ref Matrix4x4 matrix, Quaternion rotation)
     {
+        rotation.Normalize(); // TODO illustrate / do manually
         // Technically calculation for conjugate. But inverse == conjugate when using pure rotation quaternions
         Quaternion inverse = new Quaternion(-rotation.x, -rotation.y, -rotation.z, rotation.w); 
 
+        // quaternion to matrix = q*v*q^-1
         Quaternion x, y, z;
-        x = inverse * new Quaternion(1, 0 ,0 ,0) * rotation;
-        y = inverse * new Quaternion(0, 1 ,0 ,0) * rotation;
-        z = inverse * new Quaternion(0, 0 ,1 ,0) * rotation;
-        matrix.SetColumn(0, new Vector4(x.x, x.y, x.z, 0));
-        matrix.SetColumn(1, new Vector4(y.x, y.y, y.z, 0));
-        matrix.SetColumn(2, new Vector4(z.x, z.y, z.z, 0));
+        x = inverse * new Quaternion(1, 0, 0, 0) * rotation;
+        y = inverse * new Quaternion(0, 1, 0, 0) * rotation;
+        z = inverse * new Quaternion(0, 0, 1, 0) * rotation;
+
+        matrix.SetColumn(0, new Vector4(x.x, y.x, z.x, 0));
+        matrix.SetColumn(1, new Vector4(x.y, y.y, z.y, 0));
+        matrix.SetColumn(2, new Vector4(x.z, y.z, z.z, 0));
     }
     
     public static Vector3 ExtractScale(Matrix4x4 matrix)
