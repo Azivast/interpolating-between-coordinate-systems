@@ -8,7 +8,7 @@ using Vectors;
 /// </summary>
 public class CubeMesh
 {
-    public Vector3[] Vertices =
+    public readonly Vector3[] Vertices =
     {
         new Vector3(-0.5f, -0.5f, 0-.5f),
         new Vector3(-0.5f, -0.5f, 0-.5f) + Vector3.forward,

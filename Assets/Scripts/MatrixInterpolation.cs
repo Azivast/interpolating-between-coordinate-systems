@@ -1,26 +1,17 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Numerics;
 using UnityEditor;
-using UnityEditor.EditorTools;
-using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.UIElements;
 using Vectors;
 using Matrix4x4 = UnityEngine.Matrix4x4;
 using Quaternion = UnityEngine.Quaternion;
-using Vector3 = UnityEngine.Vector3;
 
 [System.Serializable, ExecuteAlways, RequireComponent(typeof(VectorRenderer))]
 public class MatrixInterpolation : MonoBehaviour
 {
+    private VectorRenderer vectors;
+    
     [SerializeField] private bool DoTranslation = true;
     [SerializeField] private bool DoRotation = true;
     [SerializeField] private bool DoScale = true;
-    
-    private VectorRenderer vectors;
     [SerializeField][Range(0, 1)] private float time = 0;
 
     [SerializeField, HideInInspector] internal Matrix4x4 A = Matrix4x4.identity; // Original state
@@ -30,7 +21,7 @@ public class MatrixInterpolation : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if (TryGetComponent<VectorRenderer>(out vectors)) //TODO: Creates 2 ??
+        if (!TryGetComponent<VectorRenderer>(out vectors))
         {
             vectors = gameObject.AddComponent<VectorRenderer>();
         }
@@ -56,8 +47,8 @@ public class MatrixInterpolation : MonoBehaviour
             var bRot = MatrixHelper.ExtractRotation(B);
             
             // Interpolate position, scale and rotation
-            var cPos = (1f - time) * aPos + time * bPos; // lerp
-            var cScale = (1f - time) * aScale + time * bScale; // lerp
+            var cPos = Calc.Lerp(aPos, bPos, time);
+            var cScale  = Calc.Lerp(aScale, bScale, time);
             Quaternion cRot = Calc.InterpolateQuaternions(aRot, bRot, time); // slerp
 
             // Update C matrix based on interpolated values. If toggle is unchecked values from A are used.

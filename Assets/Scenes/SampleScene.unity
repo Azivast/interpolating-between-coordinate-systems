@@ -132,82 +132,15 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 85667711}
-  - component: {fileID: 85667710}
+  - component: {fileID: 85667713}
   - component: {fileID: 85667712}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: Interpolation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &85667710
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 85667708}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b05cd43475ca2f4a99a0396dc0642e5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DoTranslation: 1
-  DoRotation: 1
-  DoScale: 0
-  time: 1
-  A:
-    e00: -0.76818645
-    e01: -0.5896727
-    e02: -0.34533626
-    e03: 1.7019134
-    e10: 0.44572106
-    e11: -0.8261841
-    e12: 0.41930524
-    e13: 1.066006
-    e20: -0.5180013
-    e21: 0.16357365
-    e22: 0.8729255
-    e23: 1.1329473
-    e30: 0
-    e31: 0
-    e32: 0
-    e33: 1
-  B:
-    e00: 1
-    e01: 0
-    e02: 0
-    e03: -0.8452523
-    e10: 0
-    e11: 1
-    e12: 0
-    e13: -1.0549557
-    e20: 0
-    e21: 0
-    e22: 1
-    e23: -6.886898
-    e30: 0
-    e31: 0
-    e32: 0
-    e33: 1
-  C:
-    e00: 1.0281552
-    e01: 0
-    e02: 0
-    e03: -0.8452523
-    e10: 0
-    e11: 1.0281296
-    e12: 0
-    e13: -1.0549557
-    e20: 0
-    e21: 0
-    e22: 1.0281405
-    e23: -6.886898
-    e30: 0
-    e31: 0
-    e32: 0
-    e33: 1
 --- !u!4 &85667711
 Transform:
   m_ObjectHideFlags: 0
@@ -232,11 +165,78 @@ MonoBehaviour:
   m_GameObject: {fileID: 85667708}
   m_Enabled: 1
   m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b05cd43475ca2f4a99a0396dc0642e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DoTranslation: 1
+  DoRotation: 1
+  DoScale: 1
+  time: 0
+  A:
+    e00: 0.9542896
+    e01: 0
+    e02: 0
+    e03: 2.2107787
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: -0.9595431
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  B:
+    e00: 0.55590737
+    e01: -0.12384421
+    e02: 0.82196695
+    e03: -0.0140993595
+    e10: 0.1384545
+    e11: 0.98882115
+    e12: 0.05534517
+    e13: 0
+    e20: -0.81963253
+    e21: 0.083038226
+    e22: 0.5668397
+    e23: 4.4564447
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  C:
+    e00: 0.9542896
+    e01: 0
+    e02: 0
+    e03: 2.2107787
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: -0.9595431
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+--- !u!114 &85667713
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 85667708}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 81d27c72da2cd454c973e83cb185a8cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius: 0.086
-  tipHeight: 0.236
+  radius: 0.111
+  tipHeight: 0.448
   layer: 0
   camera: {fileID: 0}
 --- !u!1 &952630615

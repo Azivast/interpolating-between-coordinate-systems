@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -70,7 +71,13 @@ public static class Calc
          matrix[0,1] * matrix[1,0] * matrix[2,2] * matrix[3,3] + matrix[0,0] * matrix[1,1] * matrix[2,2] * matrix[3,3];
     }
     
-    // Slerp implementation
+    // Linear interpolation of vectors
+    public static Vector3 Lerp(Vector3 start, Vector3 end, float time)
+    {
+        return (1f - time) * start + time * end;
+    }
+    
+    // Spherical linear interpolation of quaternions
     public static Quaternion InterpolateQuaternions(Quaternion start, Quaternion end, float time)
     {
         // Calc cosine of angle between quaternions (dot product)
@@ -106,6 +113,5 @@ public static class Calc
             start.y * kStart + end.y * kEnd,
             start.z * kStart + end.z * kEnd,
             start.w * kStart + end.w * kEnd);
-
     }
 }
