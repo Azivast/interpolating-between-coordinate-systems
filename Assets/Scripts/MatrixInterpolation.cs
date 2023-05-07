@@ -73,7 +73,7 @@ public class MatrixInterpolation : MonoBehaviour
                 cubeB.Vertices[i] = B.MultiplyPoint(cubeB.Vertices[i]);
             }
             
-            // Illustrate model
+            // Illustrate models
             cubeA.Draw(vectors, Color.yellow);
             cubeB.Draw(vectors, Color.yellow);
             cubeC.Draw(vectors);
