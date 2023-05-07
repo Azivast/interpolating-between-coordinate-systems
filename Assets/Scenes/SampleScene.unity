@@ -156,55 +156,54 @@ MonoBehaviour:
   DoTranslation: 1
   DoRotation: 1
   DoScale: 0
-  vectors: {fileID: 85667712}
-  Time: 1
+  time: 1
   A:
-    e00: 1
-    e01: 0
-    e02: 0
-    e03: 0
-    e10: 0
-    e11: 1
-    e12: 0
-    e13: 0
-    e20: 0
-    e21: 0
-    e22: 1
-    e23: 0
+    e00: -0.76818645
+    e01: -0.5896727
+    e02: -0.34533626
+    e03: 1.7019134
+    e10: 0.44572106
+    e11: -0.8261841
+    e12: 0.41930524
+    e13: 1.066006
+    e20: -0.5180013
+    e21: 0.16357365
+    e22: 0.8729255
+    e23: 1.1329473
     e30: 0
     e31: 0
     e32: 0
     e33: 1
   B:
-    e00: 0.7071069
+    e00: 1
     e01: 0
-    e02: 0.7071067
-    e03: -1.1786098
+    e02: 0
+    e03: -0.8452523
     e10: 0
     e11: 1
     e12: 0
-    e13: 0
-    e20: -0.7071067
+    e13: -1.0549557
+    e20: 0
     e21: 0
-    e22: 0.7071069
-    e23: -1.3084645
+    e22: 1
+    e23: -6.886898
     e30: 0
     e31: 0
     e32: 0
     e33: 1
   C:
-    e00: 0.7071069
-    e01: -0.70710665
+    e00: 1.0281552
+    e01: 0
     e02: 0
-    e03: -1.1786098
-    e10: 0.70710665
-    e11: 0.7071069
+    e03: -0.8452523
+    e10: 0
+    e11: 1.0281296
     e12: 0
-    e13: 0
+    e13: -1.0549557
     e20: 0
     e21: 0
-    e22: 1
-    e23: -1.3084645
+    e22: 1.0281405
+    e23: -6.886898
     e30: 0
     e31: 0
     e32: 0
@@ -216,14 +215,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 85667708}
-  m_LocalRotation: {x: 0.3390482, y: -0.34663945, z: -0.49645126, w: 0.7200164}
-  m_LocalPosition: {x: -1.388, y: 0, z: -0.307}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.09, y: 0, z: 2.09}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 8.283, y: -57.632, z: -73.735}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &85667712
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -25,11 +25,10 @@ public static class MatrixHelper
         Quaternion result;
 
         // Extract each axis and scale from the matrix
-        Vector3 x = matrix.GetColumn(0);
-        Vector3 y = matrix.GetColumn(1);
-        Vector3 z = matrix.GetColumn(2);
-        x.Normalize(); y.Normalize(); z.Normalize();
-        
+        Vector3 x = Calc.Normalize(matrix.GetColumn(0));
+        Vector3 y = Calc.Normalize(matrix.GetColumn(1));
+        Vector3 z = Calc.Normalize(matrix.GetColumn(2));
+
         // TODO: Explain
         result.x = Mathf.Sqrt( Mathf.Max( 0, 1 + x.x - y.y - z.z ) ) / 2; 
         result.y = Mathf.Sqrt( Mathf.Max( 0, 1 - x.x + y.y - z.z ) ) / 2; 
@@ -45,7 +44,8 @@ public static class MatrixHelper
 
     public static void SetRotation(ref Matrix4x4 matrix, Quaternion rotation, Vector3 scale)
     {
-        rotation.Normalize(); // TODO illustrate / do manually
+        rotation = Calc.Normalize(rotation);
+        
         // Technically calculation for conjugate. But inverse == conjugate when using pure rotation quaternions
         Quaternion inverse = new Quaternion(-rotation.x, -rotation.y, -rotation.z, rotation.w); 
         
@@ -55,9 +55,9 @@ public static class MatrixHelper
         y = inverse * new Quaternion(0, 1, 0, 0) * rotation;
         z = inverse * new Quaternion(0, 0, 1, 0) * rotation;
         
-        var newX = new Vector4(x.x, y.x, z.x, 0).normalized * scale.x;
-        var newY = new Vector4(x.y, y.y, z.y, 0).normalized * scale.y;
-        var newZ = new Vector4(x.z, y.z, z.z, 0).normalized * scale.z;
+        var newX =  Calc.Normalize(new Vector4(x.x, y.x, z.x, 0)) * scale.x;
+        var newY =  Calc.Normalize(new Vector4(x.y, y.y, z.y, 0)) * scale.y;
+        var newZ =  Calc.Normalize(new Vector4(x.z, y.z, z.z, 0)) * scale.z;
         
         matrix.SetColumn(0, newX);
         matrix.SetColumn(1, newY);
@@ -70,7 +70,7 @@ public static class MatrixHelper
         Vector3 y = new Vector3(matrix.m01, matrix.m11, matrix.m21);
         Vector3 z = new Vector3(matrix.m02, matrix.m12, matrix.m22);
 
-        return new Vector3(x.magnitude, y.magnitude, z.magnitude); // magnitude = sqrt of sum of squared components
+        return new Vector3(Calc.Magnitude(x), Calc.Magnitude(y), Calc.Magnitude(z));
     }
     public static void SetScale(ref Matrix4x4 matrix, Vector3 scale)
     {
@@ -79,9 +79,9 @@ public static class MatrixHelper
         Vector3 z = new Vector3(matrix.m02, matrix.m12, matrix.m22);
         
         // Resize axles
-        x = x.normalized * scale.x;
-        y = y.normalized * scale.y;
-        z = z.normalized * scale.z;
+        x = Calc.Normalize(x) * scale.x;
+        y = Calc.Normalize(y) * scale.y;
+        z = Calc.Normalize(z) * scale.z;
         
         // Set axles
         matrix.m00 = x.x;
